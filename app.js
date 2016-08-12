@@ -1,14 +1,27 @@
 'use strict'
 const Redis = require('ioredis');
-//const tasks = require('./tasks.js');    // 任务函数文件
-const redis = require('./redis.js');
-const sub = require('./redis.js');
 const conf = require('./config/conf');
+var db = require("./config/db");
+//const tasks = require('./tasks.js');    // 任务函数文件
+//const redis = require('./redis.js');
+const redis = new Redis({
+    port: db.redis_port,
+    host: db.redis_host,
+    db: db.redis_db
+});
+const sub = new Redis({
+    port: db.redis_port,
+    host: db.redis_host,
+    db: db.redis_db
+});
+
+//const sub = require('./redis.js');
 
 sub.once('connect', () => {
 
     sub.subscribe(conf.sub_key, (err, count) => {
         if (err) {
+            console.log(err)
             handleError(err);
         } else {
             console.log('subscription success, subscription count is: ${count}');
@@ -47,11 +60,13 @@ let genUID = (() => {
 function createCrontab(fn, args, timeout) {
     // 添加唯一id的原因是应对同一毫秒，同函数同参数的key，会进行覆盖
     const cron_key = '${genUID()}:${fn}:${JSON.stringify(args)}';
+    console.log(cron_key)
     // 设置定时任务
     redis.set(cron_key, '', 'EX', timeout, (err, result) => {
         if (err) {
             handleError(err);
         } else {
+            console.log(result)
             console.log('create crontab status: ${result}');
         }
     });
