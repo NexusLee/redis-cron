@@ -4,6 +4,7 @@ const conf = require('./config/conf');
 var db = require("./config/db");
 //const tasks = require('./tasks.js');    // 任务函数文件
 //const redis = require('./redis.js');
+let sampleTask = require('./sampleTaskMaker.js');
 const redis = new Redis({
     port: db.redis_port,
     host: db.redis_host,
@@ -26,13 +27,20 @@ sub.once('connect', () => {
         } else {
             console.log('subscription success, subscription count is: ${count}');
             // 创建发邮件的定时任务
-            createCrontab('sendMail', ['787188993@qq.com'], 5);
+            //createCrontab('sendMail', ['787188993@qq.com'], 5);
+            sampleTask('sendMail', ['787188993@qq.com'], 30)
         }
     });
 
 });
 // 监听消息
-sub.on('message', crontabTrigger);
+sub.on('message', sampleOnExpired);
+
+sub.on('disconnect', function(){
+    sub.removeListener('message', function(){
+
+    });
+})
 
 /* 生产唯一id
  * @return {String} uid 唯一id值 
@@ -78,7 +86,8 @@ function createCrontab(fn, args, timeout) {
  */
 
 function crontabTrigger(channel, key) {
-
+console.log(channel)
+console.log(key)
     const fileds = key.split(':');
     if (fileds.length < 3) return;
 
@@ -106,6 +115,53 @@ function crontabTrigger(channel, key) {
    	// 执行函数
    	//fn(...args);
 }
+
+
+function sampleOnExpired(channel, key) {
+    console.log("1")
+    console.log(channel)
+    console.log(key)
+    // UUID:❤️func❤️params
+    var body = key.split("❤️");
+    if(body.length < 3) return;
+
+    // 取出 body 第一位爲 func
+    var func = body[1];
+
+    // 推出前兩位，後面剩下的有可能是參數裏面自帶 ❤️ 而被分割，所以要拼回去
+    body.shift(); body.shift();
+    var params = body.join("❤️");
+
+    // 然後把 params 傳入 func 去執行
+    // func:
+    //   path1/path2.func
+    func = func.split(".");
+    if(func.length !== 2) {
+        console.error("Bad params for task:", func.join("."), "-", params);
+        return;
+    }
+
+    var path = func[0];
+    func = func[1];
+
+    var mod;
+    try {
+        mod = require("./tasks/" + path);
+    } catch(e) {
+        console.error("Failed to load module", path);
+        console.error(e.stack);
+        return;
+    }
+
+    process.nextTick(function() {
+        try {
+            mod[func].apply(null, JSON.parse(params));
+        } catch(e) {
+            console.error("Failed to call function", path, "-", func, "-", params);
+            console.error(e.stack);
+        }
+    });
+};
 
 /* 错误处理函数
  * @param {Error} err 错误对象

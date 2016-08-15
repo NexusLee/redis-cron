@@ -12,6 +12,7 @@
   "author": "NexusLee",
   "license": "MIT",
   "dependencies": {
-    "ioredis": "^2.2.0"
+    "ioredis": "^2.2.0",
+    "node-uuid": "^1.4.7"
   }
 }
