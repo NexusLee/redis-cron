@@ -1,9 +1,9 @@
 'use strict'
 const Redis = require('ioredis');
 const conf = require('./config/conf');
-var db = require("./config/db");
-//const tasks = require('./tasks.js');    // 任务函数文件
-//const redis = require('./redis.js');
+const sub_key = conf.sub_key;
+const db = conf.db;
+//var db = require("./config/db");
 let sampleTask = require('./sampleTaskMaker.js');
 const redis = new Redis({
     port: db.redis_port,
@@ -16,31 +16,29 @@ const sub = new Redis({
     db: db.redis_db
 });
 
-//const sub = require('./redis.js');
-
 sub.once('connect', () => {
-
-    sub.subscribe(conf.sub_key, (err, count) => {
+    sub.subscribe(sub_key, (err, count) => {
         if (err) {
             console.log(err)
             handleError(err);
         } else {
             console.log('subscription success, subscription count is: ${count}');
             // 创建发邮件的定时任务
-            //createCrontab('sendMail', ['787188993@qq.com'], 5);
-            sampleTask('sendMail', ['787188993@qq.com'], 30)
+            createCrontab('sendMail', ['787188993@qq.com'], 5);
+            //sampleTask('sendMail', ['787188993@qq.com'], 5)
         }
     });
 
+    // 监听消息
+    sub.on('message', sampleOnExpired);
+
+    sub.on('disconnect', function(){
+        sub.removeListener('message', function(){
+
+        });
+    })
+
 });
-// 监听消息
-sub.on('message', sampleOnExpired);
-
-sub.on('disconnect', function(){
-    sub.removeListener('message', function(){
-
-    });
-})
 
 /* 生产唯一id
  * @return {String} uid 唯一id值 
@@ -68,7 +66,8 @@ let genUID = (() => {
 function createCrontab(fn, args, timeout) {
     // 添加唯一id的原因是应对同一毫秒，同函数同参数的key，会进行覆盖
     const cron_key = '${genUID()}:${fn}:${JSON.stringify(args)}';
-    console.log(cron_key)
+    //redis.config('set', 'notify-keyspace-events', 'KEA')
+
     // 设置定时任务
     redis.set(cron_key, '', 'EX', timeout, (err, result) => {
         if (err) {
@@ -118,7 +117,6 @@ console.log(key)
 
 
 function sampleOnExpired(channel, key) {
-    console.log("1")
     console.log(channel)
     console.log(key)
     // UUID:❤️func❤️params

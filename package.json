@@ -13,6 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "ioredis": "^2.2.0",
-    "node-uuid": "^1.4.7"
+    "node-uuid": "^1.4.7",
+    "redis": "^2.6.2"
   }
 }

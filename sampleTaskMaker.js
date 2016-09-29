@@ -1,7 +1,7 @@
 const uuid = require('node-uuid');
 const conf = require('./config/conf');
+const db = conf.db;
 const Redis = require('ioredis');
-var db = require("./config/db");
 const redis = new Redis({
     port: db.redis_port,
     host: db.redis_host,
@@ -21,10 +21,10 @@ var sampleTaskMaker = function(message, func, timeout) {
     // 和消息的
     var key = uuid.v1().replace(/-/g, "") +
         ":❤️" + func + "❤️" + message;
-    //var key = "111";
+    //var key = "foo";
     var content = "";
 
-    redis.multi()
+    /*redis.multi()
         .set(key, content)
         .expire(key, timeout)
         .exec(function(err) {
@@ -34,9 +34,19 @@ var sampleTaskMaker = function(message, func, timeout) {
                 return;
             }
             //redis.publish();
-            redis.publish(conf.sub_key, 'Hello world!');
+            //redis.publish(conf.sub_key, 'Hello world!');
             console.log("sdasdasd")
-        });
+        });*/
+
+    redis.set(key, '', 'PX', timeout, (err, result) => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(result)
+            console.log('create crontab status: ${result}');
+        }
+    });
+
 };
 
 exports = module.exports = sampleTaskMaker;
