@@ -21,10 +21,9 @@ var sampleTaskMaker = function(message, func, timeout) {
     // 和消息的
     var key = uuid.v1().replace(/-/g, "") +
         ":❤️" + func + "❤️" + message;
-    //var key = "foo";
     var content = "";
 
-    /*redis.multi()
+    redis.multi()
         .set(key, content)
         .expire(key, timeout)
         .exec(function(err) {
@@ -33,19 +32,17 @@ var sampleTaskMaker = function(message, func, timeout) {
                 console.error(err);
                 return;
             }
-            //redis.publish();
-            //redis.publish(conf.sub_key, 'Hello world!');
             console.log("sdasdasd")
-        });*/
+        });
 
-    redis.set(key, '', 'PX', timeout, (err, result) => {
+    /*redis.set(key, '', 'EX', timeout, (err, result) => {
         if (err) {
             console.log(err);
         } else {
             console.log(result)
             console.log('create crontab status: ${result}');
         }
-    });
+    });*/
 
 };
 

@@ -3,7 +3,6 @@ const Redis = require('ioredis');
 const conf = require('./config/conf');
 const sub_key = conf.sub_key;
 const db = conf.db;
-//var db = require("./config/db");
 let sampleTask = require('./sampleTaskMaker.js');
 const redis = new Redis({
     port: db.redis_port,
@@ -24,8 +23,8 @@ sub.once('connect', () => {
         } else {
             console.log('subscription success, subscription count is: ${count}');
             // 创建发邮件的定时任务
-            createCrontab('sendMail', ['787188993@qq.com'], 5);
-            //sampleTask('sendMail', ['787188993@qq.com'], 5)
+            createCrontab('sendMail', ['123456@qq.com'], 5);
+            //sampleTask('sendMail', ['123456@qq.com'], 5)
         }
     });
 
@@ -85,8 +84,8 @@ function createCrontab(fn, args, timeout) {
  */
 
 function crontabTrigger(channel, key) {
-console.log(channel)
-console.log(key)
+    console.log(channel)
+    console.log(key)
     const fileds = key.split(':');
     if (fileds.length < 3) return;
 
